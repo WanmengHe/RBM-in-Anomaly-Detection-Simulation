@@ -15,6 +15,7 @@ class DataGenerator():
         noise_std = 1
         return gauss(noise_avg, noise_std)
 
+
     def uniform_function(self, x, noise_factor, K):
         y = K * (1 + self.noise() * noise_factor)
         if y < 0:
@@ -86,9 +87,27 @@ def generate_multi_nodes_dataset(n_num, T, c_num):
         dataset.append(generate_one_node_dataset(T, c_num))
     return np.array(dataset)
 
+
+def binomial_function(mean):
+    return np.random.binomial(1, mean)
+
+def generate_multi_nodes_binomial(n_num, T, c_num, mean):
+    dataset = []
+    for i in range(n_num):
+        t_seq = []
+        for j in range(T):
+            c_set = []
+            for k in range(c_num):
+                c_set.append(binomial_function(mean))
+            t_seq.append(c_set)
+        dataset.append(t_seq)
+    return np.array(dataset)
+
 if __name__ == "__main__":
-    dg = DataGenerator(10, 10)
-    ds1, funcs1 = dg.generate()
-    print funcs1
-    for d in ds1:
-        print d
+    # dg = DataGenerator(10, 10)
+    # ds1, funcs1 = dg.generate()
+    # print funcs1
+    # for d in ds1:
+    #     print d
+    print generate_multi_nodes_binomial(2, 4, 88, 0.5)
+
