@@ -56,22 +56,21 @@ def build_rbm(v, W, bv, bh, k):
 
     def gibbs_step(v):
         mean_h = T.nnet.sigmoid(T.dot(v, W) + bh)
-        h = rng.binomial(size=mean_h.shape, n=1, p=mean_h,
-                         dtype=theano.config.floatX)
-        # mean_v = T.nnet.sigmoid(T.dot(h, W.T) + bv)
-        # v = rng.binomial(size=mean_v.shape, n=1, p=mean_v, dtype=theano.config.floatX)
-        mean_v = T.nnet.softmax(T.dot(h, W.T) + bv) * v.shape[0]
+        h = rng.binomial(size=mean_h.shape, n=1, p=mean_h, dtype=theano.config.floatX)
+
+        # mean_v = (T.exp(T.dot(h, W.T) + bv)/T.exp(T.dot(h, W.T) + bv).sum()) #* v.sum()
+        mean_v = T.exp(T.dot(h, W.T) + bv)/T.exp(T.dot(h, W.T) + bv).sum() * v.sum()
         v = rng.poisson(size=mean_v.shape, lam=mean_v, dtype=theano.config.floatX)
-        return mean_v, v
+        return mean_v, v, mean_h, h
 
     chain, updates = theano.scan(lambda v: gibbs_step(v)[1], outputs_info=[v], n_steps=k)
     v_sample = chain[-1]
 
-    mean_v = gibbs_step(v_sample)[0]
+    mean_v, _, mean_h, h = gibbs_step(v_sample)
     # monitor = T.xlogx.xlogy0(v, lam_v) + T.xlogx.xlogy0(1 - v, 1 - lam_v)
-    # monitor = monitor.sum() / v.shape[0]
+    # monitor = mean_v
     monitor = (v - mean_v)**2
-    monitor = monitor.sum() / v.shape[0]
+    monitor = monitor.sum()/v.shape[0]
 
     def free_energy(v):
         return -(v * bv).sum() - T.log(1 + T.exp(T.dot(v, W) + bh)).sum()
@@ -249,7 +248,7 @@ class RnnRbm:
         #                     self.dt).piano_roll.astype(theano.config.floatX)
         #            for f in files]
         dataset = dataset.astype(theano.config.floatX)
-
+        print dataset
         try:
             for epoch in xrange(num_epochs):
                 numpy.random.shuffle(dataset)
@@ -262,6 +261,7 @@ class RnnRbm:
 
                 print 'Epoch %i/%i' % (epoch + 1, num_epochs),
                 print numpy.mean(costs)
+                # print costs
                 sys.stdout.flush()
 
         except KeyboardInterrupt:
@@ -289,18 +289,18 @@ class RnnRbm:
             pylab.title('generated piano-roll')
 
 
-def test_rnnrbm(batch_size=100, num_epochs=200):
+def test_rnnrbm(batch_size=10, num_epochs=200):
     model = RnnRbm()
     # re = os.path.join(os.path.split(os.path.dirname(__file__))[0],
     #                   'data', 'Nottingham', 'train', '*.mid')
     # model.train(glob.glob(re),
     #             batch_size=batch_size, num_epochs=num_epochs)
-    dataset = dg.generate_multi_nodes_binomial(10, 100, 88, 0.5)
+    dataset = dg.generate_multi_nodes_dataset(10, 10, 88)
     model.train(dataset, batch_size=batch_size, num_epochs=num_epochs)
     return model
 
 if __name__ == '__main__':
     model = test_rnnrbm()
-    model.generate('sample1.mid')
-    model.generate('sample2.mid')
-    pylab.show()
+    # model.generate('sample1.mid')
+    # model.generate('sample2.mid')
+    # pylab.show()
