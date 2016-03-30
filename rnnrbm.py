@@ -57,23 +57,23 @@ def build_rbm(v, W, bv, bh, k):
     def gibbs_step(v):
         mean_h = T.nnet.sigmoid(T.dot(v, W) + bh)
         h = rng.binomial(size=mean_h.shape, n=1, p=mean_h, dtype=theano.config.floatX)
+        # mean_v = T.nnet.sigmoid(T.dot(h, W.T) + bv)
+        # v = rng.binomial(size=mean_v.shape, n=1, p=mean_v, dtype=theano.config.floatX)
+        mean_v = T.dot(h, W.T) + bv
+        v = mean_v + rng.normal(size=mean_v.shape, avg=0.0, std=1.0, dtype=theano.config.floatX)
+        return mean_v, v, h
 
-        # mean_v = (T.exp(T.dot(h, W.T) + bv)/T.exp(T.dot(h, W.T) + bv).sum()) #* v.sum()
-        mean_v = T.exp(T.dot(h, W.T) + bv)/T.exp(T.dot(h, W.T) + bv).sum() * v.sum()
-        v = rng.poisson(size=mean_v.shape, lam=mean_v, dtype=theano.config.floatX)
-        return mean_v, v, mean_h, h
-
-    chain, updates = theano.scan(lambda v: gibbs_step(v)[1], outputs_info=[v], n_steps=k)
+    chain, updates = theano.scan(lambda v: gibbs_step(v)[1], outputs_info=[v],
+                                 n_steps=k)
     v_sample = chain[-1]
 
-    mean_v, _, mean_h, h = gibbs_step(v_sample)
-    # monitor = T.xlogx.xlogy0(v, lam_v) + T.xlogx.xlogy0(1 - v, 1 - lam_v)
-    # monitor = mean_v
+    mean_v, _, h_sample = gibbs_step(v_sample)
+    # monitor = T.xlogx.xlogy0(v, mean_v) + T.xlogx.xlogy0(1 - v, 1 - mean_v)
+    # monitor = monitor.sum() / v.shape[0]
     monitor = (v - mean_v)**2
-    monitor = monitor.sum()/v.shape[0]
 
     def free_energy(v):
-        return -(v * bv).sum() - T.log(1 + T.exp(T.dot(v, W) + bh)).sum()
+        return -(v * bv).sum() - T.log(1 + T.exp(T.dot(v, W) + bh)).sum() + 0.5*(v**2).sum()
     cost = (free_energy(v) - free_energy(v_sample)) / v.shape[0]
 
     return v_sample, cost, monitor, updates
@@ -169,7 +169,7 @@ def build_rnnrbm(n_visible, n_hidden, n_hidden_recurrent):
     # symbolic loop for sequence generation
     (v_t, u_t), updates_generate = theano.scan(
         lambda u_tm1, *_: recurrence(None, u_tm1),
-        outputs_info=[None, u0], non_sequences=params, n_steps=200)
+        outputs_info=[None, u0], non_sequences=params, n_steps=5)
 
     return (v, v_sample, cost, monitor, params, updates_train, v_t,
             updates_generate)
@@ -184,7 +184,7 @@ class RnnRbm:
         n_hidden=150,
         n_hidden_recurrent=100,
         lr=0.001,
-        r=(21, 109),
+        r=3,
         dt=0.3
     ):
         '''Constructs and compiles Theano functions for training and sequence
@@ -209,7 +209,7 @@ class RnnRbm:
         self.dt = dt
         (v, v_sample, cost, monitor, params, updates_train, v_t,
             updates_generate) = build_rnnrbm(
-                r[1] - r[0],
+                r,
                 n_hidden,
                 n_hidden_recurrent
             )
@@ -267,7 +267,7 @@ class RnnRbm:
         except KeyboardInterrupt:
             print 'Interrupted by user.'
 
-    def generate(self, filename, show=True):
+    def generate(self, show=True):
         '''Generate a sample sequence, plot the resulting piano-roll and save
         it as a MIDI file.
 
@@ -277,30 +277,53 @@ class RnnRbm:
             If True, a piano-roll of the generated sequence will be shown.'''
 
         piano_roll = self.generate_function()
-        midiwrite(filename, piano_roll, self.r, self.dt)
-        if show:
-            extent = (0, self.dt * len(piano_roll)) + self.r
-            pylab.figure()
-            pylab.imshow(piano_roll.T, origin='lower', aspect='auto',
-                         interpolation='nearest', cmap=pylab.cm.gray_r,
-                         extent=extent)
-            pylab.xlabel('time (s)')
-            pylab.ylabel('MIDI note number')
-            pylab.title('generated piano-roll')
+        print piano_roll
+        # midiwrite(filename, piano_roll, self.r, self.dt)
+        # if show:
+        #     extent = (0, self.dt * len(piano_roll)) + self.r
+        #     pylab.figure()
+        #     pylab.imshow(piano_roll.T, origin='lower', aspect='auto',
+        #                  interpolation='nearest', cmap=pylab.cm.gray_r,
+        #                  extent=extent)
+        #     pylab.xlabel('time (s)')
+        #     pylab.ylabel('MIDI note number')
+        #     pylab.title('generated piano-roll')
 
 
-def test_rnnrbm(batch_size=10, num_epochs=200):
+def test_rnnrbm(batch_size=5, num_epochs=20):
     model = RnnRbm()
+
     # re = os.path.join(os.path.split(os.path.dirname(__file__))[0],
     #                   'data', 'Nottingham', 'train', '*.mid')
     # model.train(glob.glob(re),
     #             batch_size=batch_size, num_epochs=num_epochs)
-    dataset = dg.generate_multi_nodes_dataset(10, 10, 88)
+
+    # dataset = dg.generate_multi_nodes_dataset(10, 10, 3)
+    # dataset = dg.generate_multi_nodes_binomial(10, 10, 3, 0.2)
+
+    # T=5, data_num=3, r=3
+    dataset = [[[1.1, 2.1, 3.1],
+                [1.2, 2.0, 3.0],
+                [1.3, 2.1, 3.0],
+                [1.4, 2.1, 2.8],
+                [1.5, 2.1, 2.6]],
+               [[1.1, 2.1, 3.1],
+                [1.2, 2.0, 3.0],
+                [1.3, 2.1, 3.0],
+                [1.4, 2.1, 2.8],
+                [1.5, 2.1, 2.6]],
+               [[1.1, 2.1, 3.1],
+                [1.2, 2.0, 3.0],
+                [1.3, 2.1, 3.0],
+                [1.4, 2.1, 2.8],
+                [1.5, 2.1, 2.6]]]
+    dataset = numpy.array(dataset)
     model.train(dataset, batch_size=batch_size, num_epochs=num_epochs)
     return model
 
 if __name__ == '__main__':
     model = test_rnnrbm()
+    model.generate()
     # model.generate('sample1.mid')
     # model.generate('sample2.mid')
     # pylab.show()
