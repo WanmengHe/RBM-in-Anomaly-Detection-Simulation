@@ -45,14 +45,14 @@ class DataGenerator():
         # The proportion of noise could not over 30% of signal.
         noise_factor = uniform(0, 0.3)
         # Factor of any kind of function, used to amplify or minify the signal.
-        K = uniform(-1000, 1000)
+        K = uniform(-10, 10)
         # Bias of any kind of function, used to shift the signal to up(increase) or down(decrease).
         # The proportion of absolute value of bias could not over 100% of signal.
-        bias = randint(0, 5000)
+        bias = randint(0, 5)
         # Phase of any kind of function(Except uniform function), used to shift the signal to left(backward) or right(forward).
         phase = uniform(-10, 10)
         # Exponent of power funtion
-        exp = randint(-10, 10)
+        exp = randint(-2, 2)
         for x in range(0, self.len):
             if func_id == 0:
                 y = self.uniform_function(x, noise_factor, abs(K))
@@ -70,8 +70,10 @@ class DataGenerator():
     def generate(self):
         dataset = []
         func_info = []
+        func_ids = [0, 3, 3]
         for i in range(0, self.count):
-            func_id = choice(range(0, 4))
+            # func_id = choice([0, 3])
+            func_id = func_ids.pop()
             func_info.append(self.func[func_id])
             dataset.append(self.signal_iterator(func_id))
         return dataset, func_info
