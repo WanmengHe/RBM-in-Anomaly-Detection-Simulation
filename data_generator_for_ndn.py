@@ -4,7 +4,7 @@ from random import uniform, gauss, choice, randint
 
 # Global variables
 noise_sigma = 1000
-sin_lam_max = 2
+sin_lam_max = 0.5
 sin_bias_max = 1000
 
 # Kernel functions
