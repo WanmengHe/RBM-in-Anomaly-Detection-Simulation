@@ -11,13 +11,13 @@ class GBRBM(RBM):
     # initialize class
     # def __init__(self, input, n_in=784, n_hidden=500, \
     # W=None, hbias=None, vbias=None, numpy_rng=None, transpose=False, activation=T.nnet.sigmoid,
-    #              theano_rng=None, name='grbm', W_r=None, dropout=0, dropconnect=0):
+    # theano_rng=None, name='grbm', W_r=None, dropout=0, dropconnect=0):
     def __init__(self, input, n_visible=784, n_hidden=500, W=None, hbias=None, vbias=None, numpy_rng=None,
                  theano_rng=None):
         # initialize parent class (RBM)
         # RBM.__init__(self, input=input, n_visible=n_in, n_hidden=n_hidden, activation=activation,
-        #              W=W, hbias=hbias, vbias=vbias, transpose=transpose, numpy_rng=numpy_rng,
-        #              theano_rng=theano_rng, name=name, dropout=dropout, dropconnect=dropconnect)
+        # W=W, hbias=hbias, vbias=vbias, transpose=transpose, numpy_rng=numpy_rng,
+        # theano_rng=theano_rng, name=name, dropout=dropout, dropconnect=dropconnect)
         RBM.__init__(self, input=input, n_visible=n_visible, n_hidden=n_hidden, W=W, hbias=hbias, vbias=vbias,
                      numpy_rng=numpy_rng, theano_rng=theano_rng)
 
@@ -49,7 +49,7 @@ class GBRBM(RBM):
         return [pre_sigmoid_v1, v1_mean, v1_sample]
 
 
-def test_gbrbm(learning_rate=0.01, training_epochs=10, batch_size=2, n_hidden=7, n_chains=2, n_samples=10):
+def test_gbrbm(learning_rate=0.1, training_epochs=20, batch_size=2, n_hidden=7, n_chains=5, n_samples=10):
     """
     Demonstrate how to train and afterwards sample from it using Theano.
 
@@ -80,17 +80,27 @@ def test_gbrbm(learning_rate=0.01, training_epochs=10, batch_size=2, n_hidden=7,
     train_set_x = datasets
     train_set_x = theano.shared(train_set_x)
 
-
-    testset = [[1, 2, 3],
-               [3, 3, 4],
-               [1, 2, 3],
-               [2, 3, 4],
-               [4, 5, 6],
-               [1, 2, 3]]
+    testset = [[300, 14, 100],
+               [311, 12, 110],
+               [322, 10, 100],
+               [333, 8, 110],
+               [344, 6, 100],
+               [355, 4, 110]]
     testsets = numpy.array(testset)
-    testsets = datasets.astype(theano.config.floatX)
+    testsets = testsets.astype(theano.config.floatX)
     test_set_x = testsets
     test_set_x = theano.shared(test_set_x)
+
+    init_hid_set = [[1, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0]]
+    init_hid_sets = numpy.array(init_hid_set)
+    init_hid_sets = init_hid_sets.astype(theano.config.floatX)
+    test_set_hid = init_hid_sets
+    test_set_hid = theano.shared(test_set_hid)
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
@@ -120,7 +130,7 @@ def test_gbrbm(learning_rate=0.01, training_epochs=10, batch_size=2, n_hidden=7,
     # Training the RBM          #
     #################################
     # if not os.path.isdir(output_folder):
-    #     os.makedirs(output_folder)
+    # os.makedirs(output_folder)
     # os.chdir(output_folder)
 
     # start-snippet-5
@@ -160,21 +170,25 @@ def test_gbrbm(learning_rate=0.01, training_epochs=10, batch_size=2, n_hidden=7,
 
     print ('Training took %f minutes' % (pretraining_time / 60.))
 
-
-
-
     number_of_test_samples = test_set_x.get_value(borrow=True).shape[0]
 
     # pick random test examples, with which to initialize the persistent chain
     test_idx = rng.randint(number_of_test_samples - n_chains)
     persistent_vis_chain = theano.shared(
         numpy.asarray(
-            test_set_x.get_value(borrow=True)[test_idx:test_idx + n_chains],
+            test_set_x.get_value(borrow=True)[0:n_chains], #[test_idx:test_idx + n_chains],
             dtype=theano.config.floatX
         )
     )
 
-    plot_every = 100
+    persistent_hid_chain = theano.shared(
+        numpy.asarray(
+            test_set_hid.get_value(borrow=True)[test_idx:test_idx + n_chains],
+            dtype=theano.config.floatX
+        )
+    )
+
+    plot_every = 1000
     # define one step of Gibbs sampling (mf = mean-field) define a
     # function that does `plot_every` steps before returning the
     # sample for plotting
@@ -194,8 +208,7 @@ def test_gbrbm(learning_rate=0.01, training_epochs=10, batch_size=2, n_hidden=7,
         n_steps=plot_every
     )
 
-    # add to updates the shared variable that takes care of our persistent
-    # chain :.
+    # add to updates the shared variable that takes care of our persistent chain :.
     updates.update({persistent_vis_chain: vis_samples[-1]})
     # construct the function that implements our persistent chain.
     # we generate the "mean field" activations for plotting and the actual
@@ -204,20 +217,21 @@ def test_gbrbm(learning_rate=0.01, training_epochs=10, batch_size=2, n_hidden=7,
         [],
         [
             vis_mfs[-1],
-            vis_samples[-1]
+            vis_samples[-1],
+            hid_samples[-1]
         ],
         updates=updates,
         name='sample_fn'
     )
 
     # image_data = numpy.zeros(
-    #     (29 * n_samples + 1, 29 * n_chains - 1),
-    #     dtype='uint8'
+    # (29 * n_samples + 1, 29 * n_chains - 1),
+    # dtype='uint8'
     # )
     for idx in xrange(n_samples):
         # generate `plot_every` intermediate samples that we discard,
         # because successive samples in the chain are too correlated
-        vis_mf, vis_sample = sample_fn()
+        vis_mf, vis_sample, hid_sample = sample_fn()
         print ' ... plotting sample ', idx
         # image_data[29 * idx:29 * idx + 28, :] = tile_raster_images(
         #     X=vis_mf,
@@ -226,7 +240,7 @@ def test_gbrbm(learning_rate=0.01, training_epochs=10, batch_size=2, n_hidden=7,
         #     tile_spacing=(1, 1)
         # )
         # print vis_mf
-        print vis_sample
+        print hid_sample
 
 
 if __name__ == '__main__':
