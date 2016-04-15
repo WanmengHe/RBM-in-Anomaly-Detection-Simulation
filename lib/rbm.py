@@ -1,27 +1,8 @@
-"""This tutorial introduces restricted boltzmann machines (RBM) using Theano.
-
-Boltzmann Machines (BMs) are a particular form of energy-based model which
-contain hidden variables. Restricted Boltzmann Machines further restrict BMs
-to those without visible-visible and hidden-hidden connections.
-"""
 import timeit
-
-# try:
-#     import PIL.Image as Image
-# except ImportError:
-#     import Image
-
 import numpy
-
 import theano
 import theano.tensor as T
-import os
-
 from theano.tensor.shared_randomstreams import RandomStreams
-
-# from utils import tile_raster_images
-# from logistic_sgd import load_data
-
 
 # start-snippet-1
 class RBM(object):
