@@ -9,7 +9,7 @@ def exp_gbrbm(exp_name, T=[]):
         T=T,
         lam=5000,
         exc=1,
-        noise_k=0
+        noise_k=1
     )
     utils.write_data(dataset, exp_name, "generated_data")
     new_data = utils.tsne(dataset, exp_name, "generated_data", T, 3)
@@ -18,9 +18,9 @@ def exp_gbrbm(exp_name, T=[]):
     _, recovery_sample, decode_res = decoder.gbrbm_decoder(
         dataset,
         learning_rate=0.1,
-        training_epochs=30,
+        training_epochs=50,
         batch_size=1001,
-        n_hidden=500,
+        n_hidden=200,
         plot_every=1
     )
     utils.write_data(decode_res, exp_name, "decoded_data")
