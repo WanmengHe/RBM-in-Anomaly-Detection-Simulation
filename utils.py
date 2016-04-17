@@ -15,7 +15,7 @@ def plot_trendency(seqs):
     plt.show()
 
 
-def scatter_3D_space(points, exp_name):
+def scatter_3D_space(points, exp_name, file_name):
     if points.shape[1] != (3 + 1):
         print "Error! The dimension of data is not 3."
         return
@@ -32,11 +32,13 @@ def scatter_3D_space(points, exp_name):
     ax.set_xlabel("X Label")
     ax.set_ylabel("Y Label")
     ax.set_zlabel("Z Label")
-    fig.savefig("data/" + exp_name + "/3D_scatter.png", dpi=fig.dpi)
+    if not os.path.exists("data/" + exp_name):
+        os.makedirs("data/" + exp_name)
+    fig.savefig("data/" + exp_name + "/" + file_name + "_3D_scatter.png", dpi=fig.dpi)
     plt.show()
 
 
-def scatter_2D_space(points, exp_name):
+def scatter_2D_space(points, exp_name, file_name):
     fig = plt.figure()
     if points.shape[1] != (2 + 1):
         print "Error! The dimension of data is not 2."
@@ -49,11 +51,13 @@ def scatter_2D_space(points, exp_name):
             c = "b"
             m = "^"
         plt.scatter(poi[1], poi[2], c=c, marker=m)
-    fig.savefig("data/" + exp_name + "/2D_scatter.png", dpi=fig.dpi)
+    if not os.path.exists("data/" + exp_name):
+        os.makedirs("data/" + exp_name)
+    fig.savefig("data/" + exp_name + "/" + file_name + "_2D_scatter.png", dpi=fig.dpi)
     plt.show()
 
 
-def tsne(seqs, exp_name, T=[], embedded_dim=2):
+def tsne(seqs, exp_name, file_name, T=[], embedded_dim=2):
     model = TSNE(n_components=embedded_dim, random_state=0)
     np.set_printoptions(suppress=True)
     new_dim_points = model.fit_transform(seqs)
@@ -66,9 +70,9 @@ def tsne(seqs, exp_name, T=[], embedded_dim=2):
     for t in T:
         new_dim_points[t][0] = -1
     if embedded_dim == 3:
-        scatter_3D_space(new_dim_points, exp_name)
+        scatter_3D_space(new_dim_points, exp_name, file_name)
     elif embedded_dim == 2:
-        scatter_2D_space(new_dim_points, exp_name)
+        scatter_2D_space(new_dim_points, exp_name, file_name)
     else:
         print "Error! It cannot be visualized! the dimension of data is out of 3."
     return new_dim_points
