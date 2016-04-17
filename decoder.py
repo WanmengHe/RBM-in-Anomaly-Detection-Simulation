@@ -2,14 +2,13 @@ from lib.gbrbm import GBRBM
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
 import timeit
-import theano.tensor as T
 import numpy
+import theano.tensor as T
 
-def gbrbm_decoder(datasets, learning_rate=0.1, training_epochs=20, batch_size=2, n_hidden=7):
-
-    datasets = numpy.array(datasets)
-    datasets = datasets.astype(theano.config.floatX)
-    train_set_x = theano.shared(datasets)
+def gbrbm_decoder(dataset, learning_rate=0.1, training_epochs=20, batch_size=2, n_hidden=7, plot_every=1):
+    dataset = dataset.astype(theano.config.floatX)
+    train_set_x = theano.shared(dataset)
+    n_visible = dataset.shape[1]
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
@@ -28,8 +27,7 @@ def gbrbm_decoder(datasets, learning_rate=0.1, training_epochs=20, batch_size=2,
                                      borrow=True)
 
     # construct the RBM class
-    gbrbm = GBRBM(input=x, n_visible=3,
-                  n_hidden=n_hidden, numpy_rng=rng, theano_rng=theano_rng)
+    gbrbm = GBRBM(input=x, n_visible=n_visible, n_hidden=n_hidden, numpy_rng=rng, theano_rng=theano_rng)
 
     # get the cost and the gradient corresponding to one step of CD-15
     cost, updates = gbrbm.get_cost_updates(lr=learning_rate,
@@ -45,8 +43,8 @@ def gbrbm_decoder(datasets, learning_rate=0.1, training_epochs=20, batch_size=2,
         cost,
         updates=updates,
         givens={
-            # x: train_set_x[index * batch_size: (index + 1) * batch_size]
-            x: train_set_x[index: index + batch_size]
+            x: train_set_x[index * batch_size: (index + 1) * batch_size]
+            # x: train_set_x[index: index + batch_size]
         },
         name='train_rbm'
     )
@@ -76,7 +74,6 @@ def gbrbm_decoder(datasets, learning_rate=0.1, training_epochs=20, batch_size=2,
         )
     )
 
-    plot_every = 1
     # define one step of Gibbs sampling (mf = mean-field) define a
     # function that does `plot_every` steps before returning the
     # sample for plotting
@@ -113,16 +110,14 @@ def gbrbm_decoder(datasets, learning_rate=0.1, training_epochs=20, batch_size=2,
     )
 
     vis_mf, vis_sample, hid_sample = sample_fn()
-    # print vis_mf
-    print vis_sample
-    print hid_sample
     return vis_mf, vis_sample, hid_sample
 
+
 if __name__ == '__main__':
-    datasets = [[0, 0, 0],
-                [0, 0, 0],
-                [322, 10, 100],
-                [333, 8, 110],
-                [344, 6, 100],
-                [0, 0, 0]]
+    datasets = numpy.array([[0, 0, 0],
+                            [0, 0, 0],
+                            [322, 10, 100],
+                            [333, 8, 110],
+                            [344, 6, 100],
+                            [0, 0, 0]])
     gbrbm_decoder(datasets)
