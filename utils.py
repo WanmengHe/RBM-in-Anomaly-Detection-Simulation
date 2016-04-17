@@ -23,10 +23,10 @@ def scatter_3D_space(points, exp_name, file_name):
     ax = fig.add_subplot(111, projection="3d")
     for poi in points:
         if poi[0] == 0:
-            c = "r"
+            c = "y"
             m = "o"
         else:
-            c = "b"
+            c = "r"
             m = "^"
         ax.scatter(poi[1], poi[2], poi[3], c=c, marker=m)
     ax.set_xlabel("X Label")
@@ -45,10 +45,10 @@ def scatter_2D_space(points, exp_name, file_name):
         return
     for poi in points:
         if poi[0] == 0:
-            c = "r"
+            c = "y"
             m = "o"
         else:
-            c = "b"
+            c = "r"
             m = "^"
         plt.scatter(poi[1], poi[2], c=c, marker=m)
     if not os.path.exists("data/" + exp_name):
