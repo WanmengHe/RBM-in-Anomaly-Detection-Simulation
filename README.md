@@ -7,6 +7,7 @@ This project intends to implement GBRBM & RNN-RBM to decode a feature vector of 
 It mainly focus on converting a real vector to a binary vector, which keep those vectors which contain anomaly values away from the normal vectors in the binary vector space.
 
 The following two pictures indicate that there are more distinct discrimination between anomaly data(blue), and normal data. The pictures are the distribution of data points which were processed by T-SNE which is used to reduce the dimensionality of data.
+
 ![generated data after T-SNE](https://github.com/meowoodie/rbm-in-anomaly-detection-simulation/blob/master/data/N6_n1000_t5_e1_gbrbm_h500/generated_data_3D_scatter.png)
 ![decoded data after T-SNE](https://github.com/meowoodie/rbm-in-anomaly-detection-simulation/blob/master/data/N6_n1000_t5_e1_gbrbm_h500/decoded_data_3D_scatter.png)
 
