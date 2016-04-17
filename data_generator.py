@@ -46,7 +46,7 @@ def continuous_signal_seq(n=10, lam=100, noise_k=1):
 def one_exception_dataset(N=10, n=10, T=[], lam=1000, exc=-1, noise_k=0):
     dataset   = np.array(map(lambda x: continuous_signal_seq(n=n, lam=lam, noise_k=noise_k), np.arange(N))).T
     for t in T:
-        exception  = linear_seq(n=N, K=0, b=exc, noise_k=10)
+        exception  = linear_seq(n=N, K=0, b=exc, noise_k=noise_k)
         dataset[t] = exception
     # print dataset
     return dataset
