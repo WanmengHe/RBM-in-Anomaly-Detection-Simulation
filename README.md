@@ -28,15 +28,15 @@ Here is the [original feature vectors][] which are a bunch of 6-dimensional real
 I used GBRBM to decode the 1500 points from 6-dimensional real vectors to 2000-dimensional binary vectors, and they were visualized by T-SNE.
 It was surprised that the 2000-dimensional binary vectors has a distinct border between normal data and anomaly data in the perspective of 2D space.
 
-Reference
----
-One of my paper for this work: http://search.ieice.org/bin/summary_advpub.php?id=2016ICP0005&category=D&lang=E&abst=
-
 - 6-dimensional real vectors (origin points) in 2D space.
 ![generated data after T-SNE in 2D](https://github.com/meowoodie/rbm-in-anomaly-detection-simulation/blob/master/data/N6_n1500_t5_e1_gbrbm_h2000_2D/generated_data_2D_scatter.png)
 
 - 2000-dimensional binary vectors (decoded points) in 2D space.
 ![decoded data after T-SNE in 2D](https://github.com/meowoodie/rbm-in-anomaly-detection-simulation/blob/master/data/N6_n1500_t5_e1_gbrbm_h2000_2D/decoded_data_2D_scatter.png)
+
+Reference
+---
+My published paper for this work: https://www.jstage.jst.go.jp/article/transinf/E100.D/8/E100.D_2016ICP0005/_article
 
 [original feature vectors]:https://github.com/meowoodie/rbm-in-anomaly-detection-simulation/blob/master/data/N6_n1500_t5_e1_gbrbm_h2000_2D/generated_data.txt
 [decoded binary vectors]:https://github.com/meowoodie/rbm-in-anomaly-detection-simulation/blob/master/data/N6_n1500_t5_e1_gbrbm_h2000_2D/decoded_data.txt
